@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Answer Input</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="light-mode">
+    <!-- Progress Bar -->
+    <div class="progress-bar"></div>
+
+    <div class="container">
+        <div class="nav-div">
+            <input type="number" id="question-number-input" value="1"/>
+            <button id="go-button" onclick="goToQuestion()">Go</button>
+        </div>
+        <h2 id="question-number">Question 1</h2>
+        <p id="question-text"></p>
+        <div id="options">
+            <button id="optionA" class="option-btn" onclick="selectAnswer('A')">A</button>
+            <button id="optionB" class="option-btn" onclick="selectAnswer('B')">B</button>
+            <button id="optionC" class="option-btn" onclick="selectAnswer('C')">C</button>
+            <button id="optionD" class="option-btn" onclick="selectAnswer('D')">D</button>
+            <button id="optionE" class="option-btn" onclick="selectAnswer('E')">E</button>
+        </div>
+        <div class="response-div">
+            <label>Your response:</label><span id="answer-text">Not Answered</span>
+            <button id="flag-button" class="flag-btn" onclick="flagQuestion()">Flag</button>
+            <button id="next-button" class="next-btn" onclick="nextQuestion()">Next Question</button>
+        </div>
+    </div>
+
+    <!-- Dark/Light Mode Slider -->
+    <div class="mode-slider">
+        <div class="mode-toggle" onclick="toggleMode()"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(to right, #f0f0f0, #e0e0e0); /* Subtle gradient background */
+    color: #333;
+}
+
+.container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    width: 80%;
+    max-width: 700px;
+    text-align: center;
+    transition: all 0.3s ease-in-out;
+}
+
+.container:hover {
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+.nav-div {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+#question-number-input {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-right: 10px;
+    width: 70px;
+    text-align: center;
+}
+
+#go-button {
+    padding: 10px 15px;
+    background-color: #5cb85c;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+#go-button:hover {
+    background-color: #4cae4c;
+}
+
+#question-number {
+    font-size: 2.2em;
+    margin-bottom: 10px;
+    color: #3498db;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+#question-text {
+    font-size: 1.2em;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: #555;
+    text-align: justify;
+    padding: 0 20px;
+}
+
+#options {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 10px 0;
+}
+
+.option-btn {
+    margin: 8px;
+    padding: 12px 20px;
+    border: 2px solid #3498db;
+    background-color: #fff;
+    color: #3498db;
+    border-radius: 8px;
+    cursor: pointer;
+    flex: 1 1 40%;
+    transition: all .2s;
+    font-weight: bold;
+}
+.option-btn:hover{
+    background-color: #3498db;
+    color: #fff;
+}
+
+.flag-btn, .next-btn {
+    margin: 15px 8px;
+    padding: 12px 20px;
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.flag-btn {
+    background-color: #e74c3c;
+}
+
+.next-btn {
+    background-color: #2ecc71;
+}
+.response-div{
+    margin-top: 20px;
+    font-size: 1.1em;
+    color: #555;
+}
