@@ -1,10 +1,32 @@
 from flask import Flask, request, jsonify, render_template
-import csv
+import sqlite3
 import json
 import os
-import pandas as pd
+import logging
 
 app = Flask(__name__, static_folder='static')
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Database file path
+
+
+# Get the directory of the current script (app.py)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE_FILE = os.path.join(BASE_DIR, 'data', 'mcq_database.db')
+print(f"Attempting to connect to database at: {DATABASE_FILE}")
+
+#
+def get_db_connection():
+    conn = sqlite3.connect(DATABASE_FILE)
+    # ... rest of the function
+
+# Helper function to get a database connection
+def get_db_connection():
+    conn = sqlite3.connect(DATABASE_FILE)
+    conn.row_factory = sqlite3.Row  # Return rows as dictionaries
+    return conn
 
 @app.route('/')
 def index():
@@ -12,76 +34,40 @@ def index():
 
 @app.route('/get_questions', methods=['GET'])
 def get_questions():
-    csv_file = request.args.get('csv_file')
-    question_number = request.args.get('question_number', type = int, default=1)
-    if not csv_file:
-        return jsonify({"error": "CSV file name not provided"}), 400
+    question_number = request.args.get('question_number', type=int, default=1)
     try:
-        data = read_csv_data(csv_file, question_number)
-        print(data) # check the output here
-        return jsonify(data)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT question_id, question_text, option_a, option_b, option_c, option_d, option_e FROM questions WHERE question_id >= ? LIMIT 1", (question_number,))
+        row = cursor.fetchone()
+        conn.close()
 
-def read_csv_data(csv_file, question_number):
-    data = []
-    try:
-         # Construct the full path to the CSV file
-        csv_path = "C:\\Users\\anubh\\Desktop\\Project PSM\\Quiz\\mcq_csv_final.csv"
-        print(f"CSV file path: {csv_path}") #check for correct file path.
-        with open(csv_path, mode='r', encoding='utf-8') as file:
-            csv_reader = csv.DictReader(file)
-            for row in csv_reader:
-                if int(row.get('Question Number')) >= int(question_number):
-                    print(f"Processing row: {row}")  # Print for debugging.
-                    question_id = row.get('Question Number')
-                    question = row.get('Question')
-                    options = [row.get('Option A'), row.get('Option B'), row.get('Option C'), row.get('Option D'), row.get('Option E')]
-                    data.append({
-                        "question_id": question_id,
-                        "question": question,
-                        "options": options,
-                    })
-                if len(data) >0:
-                     break;
-        print("Data after processing:")  # Print for debugging.
-        print(data)
-        return data
-    except Exception as e:
-        print(f"Error reading CSV: {e}")  # Print the error message
-        return []  # Return an empty list to avoid further errors
+        if row:
+            question_data = dict(row)
+            question_data['options'] = [question_data['option_a'], question_data['option_b'], question_data['option_c'], question_data['option_d'], question_data['option_e']]
+            return jsonify([question_data])  # Return as a list for consistency with frontend
+        else:
+            return jsonify([]) # Return empty list if no questions found
+    except sqlite3.Error as e:
+        logging.error(f"Database error: {e}")
+        return jsonify({"error": "Failed to fetch questions from the database."}), 500
 
 @app.route('/update_question', methods=['POST'])
 def update_question():
     data = request.get_json()
-    csv_file = data.get('csv_file')
-    if not csv_file:
-        return jsonify({"error": "CSV file name not provided"}), 400
     question_id = data.get('question_id')
     correct_answer = data.get('correct_answer')
     flagged = data.get('flagged')
     try:
-        update_csv_data(csv_file, question_id, correct_answer, flagged)
-        return jsonify({"message": "CSV updated successfully"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-def update_csv_data(csv_file, question_id, correct_answer, flagged):
-    try:
-        csv_path = "C:\\Users\\anubh\\Desktop\\Project PSM\\Quiz\\mcq_csv_final.csv"  # Use the full file path
-        df = pd.read_csv(csv_path)
-        question_id_str = str(question_id)
-        df.loc[df['Question Number'].astype(str) == question_id_str, 'Correct Answer'] = correct_answer
-        print(f"Correct answer being written: {correct_answer}")  # Debugging print statement
-        if flagged:
-            df.loc[df['Question Number'].astype(str) == question_id_str, 'Flag'] = 'yes'
-        else:
-            df.loc[df['Question Number'].astype(str) == question_id_str, 'Flag'] = 'no'
-        # Added quoting to handle commas in the 'Correct Answer' field
-        df.to_csv(csv_path, index=False, quoting=csv.QUOTE_MINIMAL, quotechar='"')
-        print("CSV file updated successfully")  # print for debugging
-    except Exception as e:
-        print(f"Error updating CSV: {e}")  # Print the error message
-
+        print(f"Updating question {question_id}: Correct Answer = {correct_answer}, Flagged = {flagged}") # Added print statement
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE questions SET correct_answer = ?, flagged = ? WHERE question_id = ?", (correct_answer, 'yes' if flagged else 'no', question_id))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": f"Question {question_id} updated successfully."})
+    except sqlite3.Error as e:
+        logging.error(f"Database error: {e}")
+        return jsonify({"error": "Failed to update the question in the database."}), 500
 if __name__ == '__main__':
-     app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', debug=True)
