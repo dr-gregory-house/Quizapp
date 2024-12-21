@@ -3,6 +3,7 @@ import sqlite3
 import json
 import os
 import logging
+from waitress import serve  # Import the serve function from waitress
 
 app = Flask(__name__, static_folder='static')
 
@@ -11,11 +12,10 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 
 # Database file path
 
-
 # Get the directory of the current script (app.py)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE_FILE = os.path.join(BASE_DIR, 'data', 'mcq_database.db')
-print(f"Attempting to connect to database at: {DATABASE_FILE}")
+logging.info(f"Attempting to connect to database at: {DATABASE_FILE}")
 
 #
 def get_db_connection():
@@ -35,6 +35,7 @@ def index():
 @app.route('/get_questions', methods=['GET'])
 def get_questions():
     question_number = request.args.get('question_number', type=int, default=1)
+    logging.debug(f"Fetching question number: {question_number}")
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -45,11 +46,13 @@ def get_questions():
         if row:
             question_data = dict(row)
             question_data['options'] = [question_data['option_a'], question_data['option_b'], question_data['option_c'], question_data['option_d'], question_data['option_e']]
+            logging.debug(f"Retrieved question data: {question_data}")
             return jsonify([question_data])  # Return as a list for consistency with frontend
         else:
+            logging.info("No questions found for the given criteria.")
             return jsonify([]) # Return empty list if no questions found
     except sqlite3.Error as e:
-        logging.error(f"Database error: {e}")
+        logging.error(f"Database error while fetching questions: {e}")
         return jsonify({"error": "Failed to fetch questions from the database."}), 500
 
 @app.route('/update_question', methods=['POST'])
@@ -58,16 +61,19 @@ def update_question():
     question_id = data.get('question_id')
     correct_answer = data.get('correct_answer')
     flagged = data.get('flagged')
+    logging.info(f"Received request to update question {question_id} with correct_answer='{correct_answer}' and flagged='{flagged}'")
     try:
-        print(f"Updating question {question_id}: Correct Answer = {correct_answer}, Flagged = {flagged}") # Added print statement
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("UPDATE questions SET correct_answer = ?, flagged = ? WHERE question_id = ?", (correct_answer, 'yes' if flagged else 'no', question_id))
         conn.commit()
         conn.close()
+        logging.info(f"Question {question_id} updated successfully in the database.")
         return jsonify({"message": f"Question {question_id} updated successfully."})
     except sqlite3.Error as e:
-        logging.error(f"Database error: {e}")
+        logging.error(f"Database error while updating question: {e}")
         return jsonify({"error": "Failed to update the question in the database."}), 500
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    serve(app, host='0.0.0.0', port=5000) # Use waitress to serve the application
+    logging.info("Server started with Waitress.")
